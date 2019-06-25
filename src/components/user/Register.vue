@@ -14,8 +14,8 @@
           <el-step title="完成注册"></el-step>
         </el-steps>
 
-        <email-verify/>
-        <register-submit/>
+        <email-verify v-if="progressStep===0" @onEmailVerified="toFillFormStep($event)"/>
+        <register-submit :verifiedEmail="verifiedEmail" v-if="progressStep===1"/>
 
       </el-card>
     </el-col>
@@ -29,10 +29,17 @@ import EmailVerify from '@/components/user/EmailVerify.vue'
 export default {
   data () {
     return {
-      progressStep: 0
+      progressStep: 0,
+      verifiedEmail: ''
     }
   },
   methods: {
+    toFillFormStep (data) {
+      this.progressStep = 1
+      this.verifiedEmail = data.email
+      debugger
+      console.log('verified email: ' + this.verifiedEmail)
+    }
   },
   components: {
     RegisterSubmit,

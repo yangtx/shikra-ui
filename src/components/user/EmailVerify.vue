@@ -37,6 +37,14 @@ export default {
     }
   },
   data () {
+    var validateVerifyCode = (rule, value, callback) => {
+      if (value !== this.expectedVerifyCode) {
+        callback(new Error('验证码错误'))
+      } else {
+        callback()
+      }
+    }
+
     return {
       emailVerifyData: {
         email: '',
@@ -46,6 +54,7 @@ export default {
       expectedVerifyCode: 'xxxx',
       hasSend: false,
       sendCountDown: 0,
+      timer: null,
 
       emailRules: {
         email: [
@@ -56,7 +65,8 @@ export default {
       verifyCodeRules: {
         verifyCode: [
           {required: true, message: '请输入验证码', trigger: 'blur'},
-          {min: 6, max: 6, message: '验证码无效', trigger: 'blur'}
+          {min: 6, max: 6, message: '验证码无效', trigger: 'blur'},
+          { validator: validateVerifyCode, trigger: 'blur' }
         ]
       }
     }
@@ -65,9 +75,11 @@ export default {
     sendVerifyCode () {
       this.$refs['emailForm'].validate((valid) => {
         if (valid) {
-          this.expectedVerifyCode = '123456'
-          this.sendCountDown = 60
-          this.hasSend = true
+          this.$http.post('/home').then(res => {
+            this.sendCountDown = 10
+            this.hasSend = true
+            this.setTimer()
+          })
         } else {
           return false
         }
@@ -76,12 +88,38 @@ export default {
     next () {
       this.$refs['verifyCodeForm'].validate((valid) => {
         if (valid) {
-          alert(this.emailVerifyData.verifyCode)
+          this.$emit('onEmailVerified', {email: this.emailVerifyData.email})
         } else {
           return false
         }
       })
+    },
+    setTimer () {
+      if (this.timer != null) {
+        this.cleanTimer()
+      }
+
+      this.timer = setInterval(() => {
+        this.sendCountDown--
+        if (this.sendCountDown === 0) {
+          this.cleanTimer()
+        }
+      }, 1000)
+      console.log('timer is started...')
+    },
+    cleanTimer () {
+      if (this.timer) {
+        clearInterval(this.timer)
+        this.timer = null
+        console.log('timer is cleaned...')
+      }
     }
+  },
+  created: function () {
+    // this.setTimer()
+  },
+  destroyed: function () {
+    this.cleanTimer()
   }
 }
 </script>
